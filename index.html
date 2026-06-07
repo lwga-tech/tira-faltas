@@ -34,17 +34,19 @@ header { font-size: clamp(28px, 4vw, 42px); font-weight: bold; text-align: cente
 <div id="info">TIRA FALTAS v3.6</div>
 <script>
 // =====================================================
-// CONFIGURAÇÃO SEGURA - Ofuscada
+// CONFIGURAÇÃO SEGURA - URL Ofuscada
+// NOVA URL após reimplantação
 // =====================================================
 (function(){
 // Chave API - ALTERAR PARA CADA CLIENTE
 var _k="TFv3_"+String.fromCharCode(50,48,50,54)+"_"+btoa("cliente_demo").slice(0,8);
 
-// URL da API - Ofuscada em partes
-var _p1="https://script.google.com/macros/s/";
-var _p2="AKfycbwct9v9AVDPyAWV6qS9t0wGDo4kq5EDBLv0BWPLu2kzwJnSRMWyrwFYACi_7-4LCHch";
-var _p3="https://script.google.com/macros/s/AKfycbwGBjRtQQexH25zW7sX1wvL962E5vj0nYO2T9_VUNb9qGZ_JTF9EA6_0YtFvkyLZ6JE/exec";
-var _u=_p1+_p2+_p3;
+// URL da API - NOVA URL (ofuscada em partes)
+var _p1="https://script.google.com/";
+var _p2="macros/s/";
+var _p3="AKfycbwGBjRtQQexH25zW7sX1wvL962E5vj0nYO2T9_VUNb9qGZ_JTF9EA6_0YtFvkyLZ6JE";
+var _p4="/exec";
+var _u=_p1+_p2+_p3+_p4;
 
 // =====================================================
 // RELÓGIO
@@ -75,7 +77,7 @@ function _bs(){_b(1500,0.1,0.5);setTimeout(function(){_b(2000,0.15,0.5);},100);}
 function _be(){_b(300,0.3,0.6);setTimeout(function(){_b(250,0.3,0.6);},150);}
 
 // =====================================================
-// VOZ - COM ACENTOS CORRETOS PARA PRONÚNCIA
+// VOZ - COM ACENTOS CORRETOS
 // =====================================================
 function _f(t){
 if(!('speechSynthesis'in window))return;
