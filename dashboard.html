@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIRA FALTAS - Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #020617, #0f172a, #111827);
+  color: white;
+  min-height: 100vh;
+}
+header {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+h1 { font-size: 34px; }
+.info-topo { text-align: right; }
+#relogio { font-size: 34px; font-weight: bold; color: #38bdf8; }
+#data { font-size: 18px; color: #cbd5e1; }
+.container { padding: 25px; max-width: 1400px; margin: 0 auto; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+.card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: .3s;
+  box-shadow: 0 0 30px rgba(0,0,0,.2);
+}
+.card:hover { transform: translateY(-6px); background: rgba(255,255,255,0.09); }
+.card h2 { font-size: 18px; color: #cbd5e1; }
+.card p { font-size: 58px; font-weight: bold; margin-top: 15px; }
+.presentes { border-left: 6px solid #22c55e; }
+.faltas { border-left: 6px solid #ef4444; }
+.licencas { border-left: 6px solid #eab308; }
+.total { border-left: 6px solid #38bdf8; cursor: default; }
+.total:hover { transform: none; background: rgba(255,255,255,0.06); }
+.status-box {
+  margin-top: 30px;
+  background: rgba(255,255,255,0.05);
+  padding: 25px;
+  border-radius: 20px;
+}
+.status-box h2 { margin-bottom: 15px; font-size: 20px; }
+.barra {
+  width: 100%;
+  height: 35px;
+  background: #1e293b;
+  border-radius: 30px;
+  overflow: hidden;
+  position: relative;
+}
+#barraEfetivo {
+  height: 100%;
+  width: 0%;
+  transition: 1s;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 15px;
+  font-weight: bold;
+  font-size: 14px;
+}
+#statusOperacional {
+  margin-top: 20px;
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: bold;
+  text-align: center;
+  padding: 15px;
+  border-radius: 12px;
+  transition: .3s;
+}
+.popup {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 20px;
+}
+.popup-content {
+  width: 100%;
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #111827;
+  border-radius: 25px;
+  padding: 30px;
+  position: relative;
+}
+.popup-content h2 { margin-bottom: 20px; padding-right: 40px; }
+.popup-content ul { list-style: none; }
+.popup-content li {
+  background: #1e293b;
+  margin-bottom: 10px;
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.popup-content li:hover { background: #334155; }
+.fechar {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  cursor: pointer;
+  font-size: 28px;
+  color: #94a3b8;
+  transition: .2s;
+}
+.fechar:hover { color: white; transform: scale(1.1); }
+.vazio { text-align: center; color: #64748b; padding: 40px; font-style: italic; }
+.erro-api {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  margin: 20px 0;
+}
+.status-operacional { color: #22c55e; background: rgba(34,197,94,0.1); }
+.status-reduzido { color: #eab308; background: rgba(234,179,8,0.1); }
+.status-critico { color: #ef4444; background: rgba(239,68,68,0.1); }
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  header { flex-direction: column; text-align: center; }
+  .info-topo { text-align: center; }
+  .card p { font-size: 42px; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🚨 TIRA FALTAS</h1>
+    <div>Centro Operacional de Presenca</div>
+  </div>
+  <div class="info-topo">
+    <div id="relogio">00:00:00</div>
+    <div id="data">--/--/----</div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="cards">
+    <div class="card presentes" onclick="abrirPopup('presentes')">
+      <h2>🟢 Efetivo Pronto</h2>
+      <p id="presentes">--</p>
+    </div>
+    <div class="card faltas" onclick="abrirPopup('faltas')">
+      <h2>❌ Faltas</h2>
+      <p id="faltas">--</p>
+    </div>
+    <div class="card licencas" onclick="abrirPopup('licencas')">
+      <h2>🟡 Licencas</h2>
+      <p id="licencas">--</p>
+    </div>
+    <div class="card total">
+      <h2>👥 Total</h2>
+      <p id="total">--</p>
+    </div>
+  </div>
+
+  <div class="status-box">
+    <h2>📊 Status Operacional</h2>
+    <div class="barra">
+      <div id="barraEfetivo">0%</div>
+    </div>
+    <div id="statusOperacional">⏳ Carregando dados...</div>
+  </div>
+</div>
+
+<footer>
+  Atualizacao automatica a cada 10 segundos • <span id="ultimaAtualizacao">--:--:--</span>
+</footer>
+
+<div class="popup" id="popup" onclick="fecharPopupFora(event)">
+  <div class="popup-content" onclick="event.stopPropagation()">
+    <span class="fechar" onclick="fecharPopup()">✖</span>
+    <h2 id="tituloPopup"></h2>
+    <ul id="listaPopup"></ul>
+  </div>
+</div>
+
+<script>
+// URL da API - sua URL do Google Apps Script
+const API_URL = "https://script.google.com/macros/s/AKfycbxBM-BfE13im-FhedcLiKM9H2VHsG80DMlbNo-X9qPNNTFSqey-UCfaS1BBpCVZJSGf/exec?dashboard=1";
+
+let dashboard = {};
+
+function atualizarRelogio() {
+  var agora = new Date();
+  document.getElementById('relogio').innerText = agora.toLocaleTimeString('pt-BR');
+  document.getElementById('data').innerText = agora.toLocaleDateString('pt-BR', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+}
+setInterval(atualizarRelogio, 1000);
+atualizarRelogio();
+
+async function carregarDashboard() {
+  try {
+    var response = await fetch(API_URL);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    var text = await response.text();
+    var data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error('Resposta invalida');
+    }
+
+    if (data.erro) throw new Error(data.erro);
+
+    dashboard = {
+      presentes: data.presentes || 0,
+      faltas: data.faltas || 0,
+      licencas: data.licencas || 0,
+      total: data.total || 0,
+      listaPresentes: data.listaPresentes || [],
+      listaFaltas: data.listaFaltas || [],
+      listaLicencas: data.listaLicencas || []
+    };
+
+    atualizarInterface();
+    atualizarTimestamp();
+
+  } catch (erro) {
+    console.error('Erro:', erro);
+    document.getElementById('statusOperacional').innerText = '⚠️ Erro ao carregar: ' + erro.message;
+    document.getElementById('statusOperacional').className = 'status-critico';
+  }
+}
+
+function atualizarInterface() {
+  document.getElementById('presentes').innerText = dashboard.presentes;
+  document.getElementById('faltas').innerText = dashboard.faltas;
+  document.getElementById('licencas').innerText = dashboard.licencas;
+  document.getElementById('total').innerText = dashboard.total;
+  atualizarStatus();
+}
+
+function atualizarStatus() {
+  var total = dashboard.total || 1;
+  var percentual = Math.round((dashboard.presentes / total) * 100);
+
+  var barra = document.getElementById('barraEfetivo');
+  barra.style.width = percentual + '%';
+  barra.innerText = percentual + '%';
+
+  var status = document.getElementById('statusOperacional');
+  status.className = '';
+
+  if (percentual >= 80) {
+    status.innerText = '🟢 EFETIVO OPERACIONAL';
+    status.classList.add('status-operacional');
+    barra.style.background = 'linear-gradient(90deg, #22c55e, #16a34a)';
+  } else if (percentual >= 50) {
+    status.innerText = '🟡 EFETIVO REDUZIDO';
+    status.classList.add('status-reduzido');
+    barra.style.background = 'linear-gradient(90deg, #eab308, #ca8a04)';
+  } else {
+    status.innerText = '🔴 EFETIVO CRITICO';
+    status.classList.add('status-critico');
+    barra.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+  }
+}
+
+function abrirPopup(tipo) {
+  var popup = document.getElementById('popup');
+  var titulo = document.getElementById('tituloPopup');
+  var lista = document.getElementById('listaPopup');
+  lista.innerHTML = '';
+
+  var configs = {
+    presentes: {
+      titulo: '🟢 EFETIVO PRONTO',
+      dados: dashboard.listaPresentes,
+      render: function(nome) { return '<li><span>' + nome + '</span><span style="color:#22c55e">●</span></li>'; }
+    },
+    faltas: {
+      titulo: '❌ MILITARES AUSENTES',
+      dados: dashboard.listaFaltas,
+      render: function(nome) { return '<li><span>' + nome + '</span><span style="color:#ef4444">●</span></li>'; }
+    },
+    licencas: {
+      titulo: '🟡 LICENCAS',
+      dados: dashboard.listaLicencas,
+      render: function(item) {
+        var nome = typeof item === 'object' ? item.nome : item;
+        var situacao = typeof item === 'object' ? item.situacao : '';
+        return '<li><span>' + nome + '</span><span style="color:#eab308;font-size:13px">' + situacao + '</span></li>';
+      }
+    }
+  };
+
+  var config = configs[tipo];
+  titulo.innerText = config.titulo;
+
+  if (config.dados.length === 0) {
+    lista.innerHTML = '<li class="vazio">Nenhum registro encontrado</li>';
+  } else {
+    config.dados.forEach(function(item) {
+      lista.innerHTML += config.render(item);
+    });
+  }
+
+  popup.style.display = 'flex';
+}
+
+function fecharPopup() {
+  document.getElementById('popup').style.display = 'none';
+}
+
+function fecharPopupFora(event) {
+  if (event.target === document.getElementById('popup')) {
+    fecharPopup();
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') fecharPopup();
+});
+
+function atualizarTimestamp() {
+  var agora = new Date();
+  document.getElementById('ultimaAtualizacao').innerText = agora.toLocaleTimeString('pt-BR');
+}
+
+carregarDashboard();
+setInterval(carregarDashboard, 10000);
+</script>
+
+</body>
+</html>
