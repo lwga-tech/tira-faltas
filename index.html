@@ -1,38 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Presença</title>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; font-family: Arial, sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b); color: white; overflow: hidden; }
-#app { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; }
-header { font-size: clamp(28px, 4vw, 42px); font-weight: bold; text-align: center; margin-bottom: 10px; }
-#clock { font-size: clamp(26px, 4vw, 40px); margin-bottom: 20px; color: #38bdf8; }
-#reader { width: min(400px, 85vw); min-height: 300px; border-radius: 12px; overflow: hidden; }
-#nome { font-size: clamp(24px, 3vw, 36px); margin-top: 20px; text-align: center; font-weight: bold; }
-#status { font-size: clamp(20px, 2.5vw, 28px); margin-top: 12px; padding: 14px 24px; border-radius: 12px; text-align: center; min-width: 300px; }
-.sucesso { background: #16a34a; }
-.saida { background: #2563eb; }
-.licenca { background: #dc2626; }
-.erro { background: #991b1b; }
-#info { position: fixed; bottom: 10px; left: 10px; font-size: 11px; color: rgba(255,255,255,0.3); }
-@media (max-width: 600px) { #reader { width: 95%; min-height: 250px; } #status { min-width: auto; width: 90%; } }
-</style>
-<base target="_blank">
-</head>
-<body>
-<div id="app">
-<header>📍 Controle de Presença</header>
-<div id="clock">--:--:--</div>
-<div id="reader"></div>
-<div id="nome">Iniciando...</div>
-<div id="status"></div>
-</div>
-<div id="info">TIRA FALTAS v3.6</div>
-<script>
 // =====================================================
 // CONFIGURAÇÃO SEGURA - URL Ofuscada
 // NOVA URL após reimplantação
@@ -41,11 +6,11 @@ header { font-size: clamp(28px, 4vw, 42px); font-weight: bold; text-align: cente
 // Chave API - ALTERAR PARA CADA CLIENTE
 var _k="TFv3_"+String.fromCharCode(50,48,50,54)+"_"+btoa("cliente_demo").slice(0,8);
 
-// URL da API - NOVA URL (ofuscada em partes)
+// URL da API - URL CORRETA (ofuscada em partes)
 var _p1="https://script.google.com/";
-var _p2="macros/s/";
-var _p3="https://script.google.com/macros/library/d/1U78tXLVDoAYFA2Fa9toVp1EPlrODpERHbK5JGcfz_1xgtVUiWM1h76p_/26";
-var _p4="/exec";
+var _p2="macros/library/d/";
+var _p3="1U78tXLVDoAYFA2Fa9toVp1EPlrODpERHbK5JGcfz_1xgtVUiWM1h76p_";
+var _p4="/30";
 var _u=_p1+_p2+_p3+_p4;
 
 // =====================================================
@@ -94,8 +59,8 @@ window.speechSynthesis.speak(u);
 // =====================================================
 function _s(){
 var h=new Date().getHours();
-if(h>=5&&h<12)return'Bom dia';
-if(h>=12&&h<18)return'Boa tarde';
+if(h>=5&&h<<12)return'Bom dia';
+if(h>=12&&h<<18)return'Boa tarde';
 return'Boa noite';
 }
 
@@ -203,6 +168,3 @@ document.getElementById("nome").innerText="Permissão necessária";
 window._u="";
 window.onload=_i;
 })();
-</script>
-</body>
-</html>
