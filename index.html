@@ -2,207 +2,223 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle de Presença</title>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; font-family: Arial, sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b); color: white; overflow: hidden; }
-#app { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; }
-header { font-size: clamp(28px, 4vw, 42px); font-weight: bold; text-align: center; margin-bottom: 10px; }
-#clock { font-size: clamp(26px, 4vw, 40px); margin-bottom: 20px; color: #38bdf8; }
-#reader { width: min(400px, 85vw); min-height: 300px; border-radius: 12px; overflow: hidden; }
-#nome { font-size: clamp(24px, 3vw, 36px); margin-top: 20px; text-align: center; font-weight: bold; }
-#status { font-size: clamp(20px, 2.5vw, 28px); margin-top: 12px; padding: 14px 24px; border-radius: 12px; text-align: center; min-width: 300px; }
+html, body { margin: 0; padding: 0; height: 100%; font-family: Arial; background: linear-gradient(135deg, #0f172a, #1e293b); color: white; }
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+header { font-size: 42px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+#clock { font-size: 48px; margin: 20px; color: #38bdf8; }
+#reader { width: 420px; max-width: 90%; min-height: 300px; border-radius: 12px; overflow: hidden; }
+#nome { font-size: 36px; margin-top: 20px; text-align: center; font-weight: bold; }
+#status { font-size: 28px; margin-top: 10px; padding: 15px 30px; border-radius: 10px; text-align: center; min-width: 300px; }
 .sucesso { background: #16a34a; }
 .saida { background: #2563eb; }
 .licenca { background: #dc2626; }
-.erro { background: #991b1b; }
-#info { position: fixed; bottom: 10px; left: 10px; font-size: 11px; color: rgba(255,255,255,0.3); }
-@media (max-width: 600px) { #reader { width: 95%; min-height: 250px; } #status { min-width: auto; width: 90%; } }
+.erro { background: #b91c1c; }
+#info { position: fixed; bottom: 10px; left: 10px; font-size: 12px; color: rgba(255,255,255,0.3); }
 </style>
-<base target="_blank">
 </head>
 <body>
 <div id="app">
-<<header>📍 Controle de Presença</header>
-<div id="clock">--:--:--</div>
-<div id="reader"></div>
-<div id="nome">Iniciando...</div>
-<div id="status"></div>
+  <header>📍 Controle de Presença</header>
+  <div id="clock">--:--:--</div>
+  <div id="reader"></div>
+  <div id="nome">Iniciando...</div>
+  <div id="status"></div>
 </div>
-<div id="info">TIRA FALTAS v3.7</div>
+<div id="info">TIRA FALTAS v3.8</div>
+
 <script>
 // =====================================================
-// CONFIGURAÇÃO SEGURA - URL Ofuscada
-// V3.7 - Corrige aba Funcionarios
+// CONFIGURAÇÃO - URL do Web App
 // =====================================================
-(function(){
-// Chave API - ALTERAR PARA CADA CLIENTE
-var _k="TFv3_"+String.fromCharCode(50,48,50,54)+"_"+btoa("cliente_demo").slice(0,8);
-
-// URL da API - NOVA URL V3.7 (ofuscada em partes)
-var _p1="https://script.google.com/";
-var _p2="macros/s/";
-var _p3="AKfycbxsUuTLBwa0dwo4r4TxS7dKfPiXo8meDT3OQmG0lODZTj9_lJ4AZGkNDQc07H07_hQ";
-var _p4="/exec";
-var _u=_p1+_p2+_p3+_p4;
-
-// =====================================================
-// RELÓGIO
-// =====================================================
-function _r(){
-var a=new Date();
-document.getElementById("clock").innerText=a.toLocaleDateString('pt-BR')+" "+a.toLocaleTimeString('pt-BR');
-}
-setInterval(_r,1000);_r();
+const API_URL = "https://script.google.com/macros/s/AKfycbyo47jByLARUsPpXcwaMQhVi_4b4IaGp7YQKFoJ1Zzd3Ksllx2wNh48gdsJ8UgUsSRp/exec";
 
 // =====================================================
 // SOM
 // =====================================================
-function _b(f,d,v){
-f=f||1000;d=d||0.15;v=v||0.5;
-try{
-var c=new(window.AudioContext||window.webkitAudioContext)();
-var o=c.createOscillator(),g=c.createGain();
-o.connect(g);g.connect(c.destination);
-o.frequency.value=f;o.type="sine";o.start();
-g.gain.setValueAtTime(v,c.currentTime);
-g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);
-o.stop(c.currentTime+d);
-}catch(e){}
-}
-function _bo(){_b(1200,0.15,0.6);}
-function _bs(){_b(1500,0.1,0.5);setTimeout(function(){_b(2000,0.15,0.5);},100);}
-function _be(){_b(300,0.3,0.6);setTimeout(function(){_b(250,0.3,0.6);},150);}
-
-// =====================================================
-// VOZ - COM ACENTOS CORRETOS
-// =====================================================
-function _f(t){
-if(!('speechSynthesis'in window))return;
-window.speechSynthesis.cancel();
-var u=new SpeechSynthesisUtterance(t);
-u.lang='pt-BR';u.rate=0.9;u.pitch=0.95;u.volume=1;
-var v=window.speechSynthesis.getVoices();
-for(var i=0;i<v.length;i++){if(v[i].lang.indexOf('pt')!==-1){u.voice=v[i];break;}}
-window.speechSynthesis.speak(u);
+function bip() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.frequency.value = 1000;
+    oscillator.type = "sine";
+    oscillator.start();
+    gainNode.gain.setValueAtTime(1, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+    oscillator.stop(ctx.currentTime + 0.2);
+  } catch(e) {}
 }
 
-// =====================================================
-// SAUDAÇÃO
-// =====================================================
-function _s(){
-var h=new Date().getHours();
-if(h>=5&&h<<12)return'Bom dia';
-if(h>=12&&h<<18)return'Boa tarde';
-return'Boa noite';
+function bipErro() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.frequency.value = 300;
+    oscillator.type = "sine";
+    oscillator.start();
+    gainNode.gain.setValueAtTime(1, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    oscillator.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
 }
 
 // =====================================================
-// EXTRAIR PREFIXO
+// VOZ
 // =====================================================
-function _e(n){
-if(!n||typeof n!=='string')return{p:'',n:n||''};
-var m=n.trim().match(/^([A-Z\u00C0-\u00D6]{1,10})[\s\.]+(.+)$/i);
-if(m&&m[1].length>=2&&m[2].length>=2)return{p:m[1],n:m[2]};
-return{p:'',n:n.trim()};
+function falar(texto) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(texto);
+  utterance.lang = 'pt-BR';
+  utterance.rate = 0.9;
+  utterance.pitch = 0.95;
+  window.speechSynthesis.speak(utterance);
 }
 
 // =====================================================
-// LIMPAR
+// SAUDAÇÃO - CORRIGIDA
 // =====================================================
-function _l(){
-document.getElementById("nome").innerText="Aguardando leitura...";
-var s=document.getElementById("status");
-s.innerText="";s.className="";
+function getSaudacao() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'Bom dia';
+  if (h >= 12 && h < 18) return 'Boa tarde';
+  return 'Boa noite';
 }
 
 // =====================================================
-// PROCESSAR QR
+// RELÓGIO
 // =====================================================
-async function _pr(d){
-var id=d.trim();
-if(id===window._u)return;
-window._u=id;
-setTimeout(function(){window._u="";},3000);
-
-_bo();
-
-try{
-var r=await fetch(_u,{method:"POST",body:JSON.stringify({id:id,k:_k})});
-var data=await r.json();
-
-var ne=document.getElementById("nome"),se=document.getElementById("status");
-var nome=data.nome||"Não encontrado";
-ne.innerText=nome;
-
-var info=_e(nome);
-var saud=_s();
-var nomeVoz=info.p?(info.p+' '+info.n):info.n;
-
-if(data.bloqueado){
-var mot=data.motivo||'Licença';
-var fim=data.fim||'data não informada';
-se.innerText=mot+" até "+fim;
-se.className="licenca";
-_be();
-_f(saud+' '+nomeVoz+'. Você está de '+mot+' até '+fim+'. Acesso não autorizado.');
-}else{
-var tipo=data.tipo;
-var hora=new Date().toLocaleTimeString('pt-BR');
-se.innerText=data.status+" às "+hora;
-se.className=(tipo==="Entrada")?"sucesso":"saida";
-_bs();
-if(tipo==="Entrada"){
-_f(saud+' '+nomeVoz+'. Sua presença foi confirmada.');
-}else{
-_f(saud+' '+nomeVoz+'. Sua saída foi confirmada.');
+function atualizarRelogio() {
+  const agora = new Date();
+  document.getElementById("clock").innerText = 
+    agora.toLocaleDateString('pt-BR') + " " + agora.toLocaleTimeString('pt-BR');
 }
-}
-setTimeout(_l,10000);
+setInterval(atualizarRelogio, 1000);
+atualizarRelogio();
 
-}catch(err){
-document.getElementById("status").innerText="Erro de conexão";
-document.getElementById("status").className="erro";
-_be();
+// =====================================================
+// LIMPAR TELA
+// =====================================================
+function limparTela() {
+  document.getElementById("nome").innerText = "Aguardando leitura...";
+  document.getElementById("status").innerText = "";
+  document.getElementById("status").className = "";
 }
+
+// =====================================================
+// LEITURA QR CODE
+// =====================================================
+let ultimoScan = "";
+
+async function onScanSuccess(id) {
+  // Evita leitura duplicada
+  if (id === ultimoScan) return;
+  ultimoScan = id;
+  setTimeout(() => ultimoScan = "", 3000);
+
+  bip();
+
+  try {
+    // Envia APENAS o ID para o backend decidir Entrada/Saída
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        id: id
+        // Não envia tipo nem status - o backend decide!
+      })
+    });
+
+    const data = await response.json();
+    const nome = data.nome || "Não encontrado";
+    const saudacao = getSaudacao();
+
+    document.getElementById("nome").innerText = nome;
+
+    const statusDiv = document.getElementById("status");
+
+    if (data.bloqueado) {
+      // Licença ou não cadastrado
+      statusDiv.innerText = (data.motivo || "Licença") + " até " + (data.fim || "data não informada");
+      statusDiv.className = "licenca";
+      bipErro();
+      falar(saudacao + " " + nome + ". Você está de " + (data.motivo || "licença") + ". Acesso não autorizado.");
+    } else {
+      // Entrada ou Saída
+      const tipo = data.tipo; // "Entrada" ou "Saída" - vem do backend!
+      const hora = data.hora || new Date().toLocaleTimeString('pt-BR');
+      
+      statusDiv.innerText = data.status || (tipo + " às " + hora);
+      statusDiv.className = (tipo === "Entrada") ? "sucesso" : "saida";
+      
+      if (tipo === "Entrada") {
+        falar(saudacao + " " + nome + ". Sua presença foi confirmada.");
+      } else {
+        falar(saudacao + " " + nome + ". Sua saída foi confirmada.");
+      }
+    }
+
+    // Limpa após 10 segundos
+    setTimeout(limparTela, 10000);
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").innerText = "Erro de conexão";
+    document.getElementById("status").className = "erro";
+    bipErro();
+  }
 }
 
 // =====================================================
 // INICIAR CÂMERA
 // =====================================================
-function _i(){
-var reader=document.getElementById("reader");
-if(typeof Html5Qrcode==='undefined'){
-reader.innerHTML="<div style='padding:20px;text-align:center'>Erro: Biblioteca não carregou</div>";
-document.getElementById("nome").innerText="Erro de carregamento";
-return;
-}
-Html5Qrcode.getCameras().then(function(c){
-if(!c||c.length===0){
-reader.innerHTML="<div style='padding:20px;text-align:center'>Nenhuma câmera encontrada</div>";
-document.getElementById("nome").innerText="Câmera não detectada";
-return;
-}
-var ci=c[0].id;
-for(var i=0;i<c.length;i++){if(/back|traseira|environment/i.test(c[i].label)){ci=c[i].id;break;}}
-var h=new Html5Qrcode("reader");
-h.start(ci,{fps:10,qrbox:{width:250,height:250}},_pr,function(){}).then(function(){
-document.getElementById("nome").innerText="Aguardando leitura...";
-}).catch(function(e){
-reader.innerHTML="<div style='padding:20px;text-align:center'>Erro: "+(e.name==='NotAllowedError'?'Permita a câmera no navegador':e.message)+"</div>";
-document.getElementById("nome").innerText="Erro na câmera";
-});
-}).catch(function(e){
-reader.innerHTML="<div style='padding:20px;text-align:center'>Permissão negada. Permita a câmera nas configurações.</div>";
-document.getElementById("nome").innerText="Permissão necessária";
-});
+function iniciarSistema() {
+  const reader = document.getElementById("reader");
+  
+  if (typeof Html5Qrcode === 'undefined') {
+    reader.innerHTML = "<div style='padding:20px;text-align:center'>Erro: Biblioteca não carregou</div>";
+    return;
+  }
+
+  Html5Qrcode.getCameras().then(devices => {
+    if (!devices || devices.length === 0) {
+      reader.innerHTML = "<div style='padding:20px;text-align:center'>Nenhuma câmera encontrada</div>";
+      return;
+    }
+
+    let cameraId = devices[0].id;
+    // Tenta usar câmera traseira
+    for (let i = 0; i < devices.length; i++) {
+      if (/back|traseira|environment/i.test(devices[i].label)) {
+        cameraId = devices[i].id;
+        break;
+      }
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      cameraId,
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess,
+      () => {} // onScanFailure vazio
+    ).then(() => {
+      document.getElementById("nome").innerText = "Aguardando leitura...";
+    }).catch(err => {
+      reader.innerHTML = "<div style='padding:20px;text-align:center'>Erro: " + err.message + "</div>";
+    });
+  }).catch(err => {
+    reader.innerHTML = "<div style='padding:20px;text-align:center'>Permissão negada. Permita a câmera.</div>";
+  });
 }
 
-window._u="";
-window.onload=_i;
-})();
+window.onload = iniciarSistema;
 </script>
 </body>
 </html>
